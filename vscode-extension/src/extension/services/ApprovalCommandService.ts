@@ -1,8 +1,5 @@
 import * as vscode from 'vscode';
-import * as nls from 'vscode-nls';
 import { ApprovalEditorService } from './ApprovalEditorService';
-
-const localize = nls.loadMessageBundle();
 import { SpecWorkflowService } from './SpecWorkflowService';
 import { CommentModalService } from './CommentModalService';
 import { HighlightColor } from '../types';
@@ -68,18 +65,18 @@ export class ApprovalCommandService {
     }
 
     if (!approvalId) {
-      vscode.window.showErrorMessage(localize('error.noActiveApproval', 'No active approval found'));
+      vscode.window.showErrorMessage('No active approval found');
       return;
     }
 
     try {
-      await this.specWorkflowService.approveRequest(approvalId, localize('approve.fromEditor', 'Approved from editor'));
-      vscode.window.showInformationMessage(localize('approve.success', '✅ Approval approved successfully'));
+      await this.specWorkflowService.approveRequest(approvalId, 'Approved from editor');
+      vscode.window.showInformationMessage('✅ Approval approved successfully');
       
       // Close the approval editor
       this.approvalEditorService.closeApprovalEditor(approvalId);
     } catch (error) {
-      vscode.window.showErrorMessage(localize('approve.failed', 'Failed to approve: {0}', String(error)));
+      vscode.window.showErrorMessage(`Failed to approve: ${error}`);
     }
   }
 
@@ -96,14 +93,14 @@ export class ApprovalCommandService {
     }
 
     if (!approvalId) {
-      vscode.window.showErrorMessage(localize('error.noActiveApproval', 'No active approval found'));
+      vscode.window.showErrorMessage('No active approval found');
       return;
     }
 
     // Prompt for rejection reason
     const reason = await vscode.window.showInputBox({
-      prompt: localize('reject.prompt', 'Please provide a reason for rejection'),
-      placeHolder: localize('reject.placeholder', 'Enter rejection reason...')
+      prompt: 'Please provide a reason for rejection',
+      placeHolder: 'Enter rejection reason...'
     });
 
     if (!reason) {
@@ -112,12 +109,12 @@ export class ApprovalCommandService {
 
     try {
       await this.specWorkflowService.rejectRequest(approvalId, reason);
-      vscode.window.showInformationMessage(localize('reject.success', '❌ Approval rejected successfully'));
+      vscode.window.showInformationMessage('❌ Approval rejected successfully');
       
       // Close the approval editor
       this.approvalEditorService.closeApprovalEditor(approvalId);
     } catch (error) {
-      vscode.window.showErrorMessage(localize('reject.failed', 'Failed to reject: {0}', String(error)));
+      vscode.window.showErrorMessage(`Failed to reject: ${error}`);
     }
   }
 
@@ -134,14 +131,14 @@ export class ApprovalCommandService {
     }
 
     if (!approvalId) {
-      vscode.window.showErrorMessage(localize('error.noActiveApproval', 'No active approval found'));
+      vscode.window.showErrorMessage('No active approval found');
       return;
     }
 
     // Prompt for revision feedback
     const feedback = await vscode.window.showInputBox({
-      prompt: localize('requestRevision.prompt', 'Please provide feedback for revision'),
-      placeHolder: localize('requestRevision.placeholder', 'Enter revision feedback...')
+      prompt: 'Please provide feedback for revision',
+      placeHolder: 'Enter revision feedback...'
     });
 
     if (!feedback) {
@@ -150,24 +147,24 @@ export class ApprovalCommandService {
 
     try {
       await this.specWorkflowService.requestRevisionRequest(approvalId, feedback);
-      vscode.window.showInformationMessage(localize('requestRevision.success', '🔄 Revision requested successfully'));
+      vscode.window.showInformationMessage('🔄 Revision requested successfully');
       
       // Keep the editor open for further review
     } catch (error) {
-      vscode.window.showErrorMessage(localize('requestRevision.failed', 'Failed to request revision: {0}', String(error)));
+      vscode.window.showErrorMessage(`Failed to request revision: ${error}`);
     }
   }
 
   private async addCommentToSelection() {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
-      vscode.window.showErrorMessage(localize('error.noActiveEditor', 'No active editor'));
+      vscode.window.showErrorMessage('No active editor');
       return;
     }
 
     const selection = editor.selection;
     if (selection.isEmpty) {
-      vscode.window.showWarningMessage(localize('error.noTextSelectionForComment', 'Please select text to add a comment'));
+      vscode.window.showWarningMessage('Please select text to add a comment');
       return;
     }
 
@@ -184,11 +181,11 @@ export class ApprovalCommandService {
         if (approval) {
           const success = await this.approvalEditorService.addCommentToSelection(editor, comment, color);
           if (!success) {
-            vscode.window.showErrorMessage(localize('comment.addFailed', 'Failed to add comment to approval document'));
+            vscode.window.showErrorMessage('Failed to add comment to approval document');
           }
         } else {
           // For regular documents, show success message (could extend with file annotations later)
-          vscode.window.showInformationMessage(localize('comment.addSuccessRegularFile', '💬 Comment created with selected color'));
+          vscode.window.showInformationMessage('💬 Comment created with selected color');
         }
       }
     });
@@ -200,7 +197,7 @@ export class ApprovalCommandService {
 
   private async resolveComment(args?: { approvalId: string; commentId: string }) {
     if (!args) {
-      vscode.window.showErrorMessage(localize('error.invalidCommentResolutionRequest', 'Invalid comment resolution request'));
+      vscode.window.showErrorMessage('Invalid comment resolution request');
       return;
     }
 
@@ -211,43 +208,43 @@ export class ApprovalCommandService {
 
     const approval = this.approvalEditorService.getActiveApprovalForEditor(editor);
     if (!approval || approval.id !== args.approvalId) {
-      vscode.window.showErrorMessage(localize('error.approvalNotFound', 'Approval not found'));
+      vscode.window.showErrorMessage('Approval not found');
       return;
     }
 
     try {
       const success = await this.approvalEditorService.resolveComment(approval, args.commentId);
       if (success) {
-        vscode.window.showInformationMessage(localize('comment.resolveSuccess', '✅ Comment resolved'));
+        vscode.window.showInformationMessage('✅ Comment resolved');
       } else {
-        vscode.window.showErrorMessage(localize('comment.resolveFailed', 'Failed to resolve comment'));
+        vscode.window.showErrorMessage('Failed to resolve comment');
       }
     } catch (error) {
-      vscode.window.showErrorMessage(localize('comment.resolveFailedError', 'Failed to resolve comment: {0}', String(error)));
+      vscode.window.showErrorMessage(`Failed to resolve comment: ${error}`);
     }
   }
 
   private async editComment(args?: { commentId: string }) {
     if (!args) {
-      vscode.window.showErrorMessage(localize('error.invalidEditCommentRequest', 'Invalid edit comment request'));
+      vscode.window.showErrorMessage('Invalid edit comment request');
       return;
     }
 
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
-      vscode.window.showErrorMessage(localize('error.noActiveEditor', 'No active editor'));
+      vscode.window.showErrorMessage('No active editor');
       return;
     }
 
     const approval = this.approvalEditorService.getActiveApprovalForEditor(editor);
     if (!approval || !approval.comments) {
-      vscode.window.showErrorMessage(localize('error.noApprovalOrComments', 'No approval or comments found'));
+      vscode.window.showErrorMessage('No approval or comments found');
       return;
     }
 
     const comment = approval.comments.find(c => c.id === args.commentId);
     if (!comment) {
-      vscode.window.showErrorMessage(localize('error.commentNotFound', 'Comment not found'));
+      vscode.window.showErrorMessage('Comment not found');
       return;
     }
 
@@ -264,7 +261,7 @@ export class ApprovalCommandService {
       const line = Math.max(0, comment.lineNumber - 1);
       range = editor.document.lineAt(line).range;
     } else {
-      vscode.window.showErrorMessage(localize('error.invalidCommentLineInfo', 'Invalid comment line information'));
+      vscode.window.showErrorMessage('Invalid comment line information');
       return;
     }
 
@@ -286,48 +283,46 @@ export class ApprovalCommandService {
         // Save the updated approval using proper state management
         await this.approvalEditorService.saveApprovalData(approval);
         
-        vscode.window.showInformationMessage(localize('comment.updateSuccess', '💬 Comment updated successfully'));
+        vscode.window.showInformationMessage('💬 Comment updated successfully');
       }
     });
   }
 
   private async deleteComment(args?: { commentId: string }) {
     if (!args) {
-      vscode.window.showErrorMessage(localize('error.invalidDeleteCommentRequest', 'Invalid delete comment request'));
+      vscode.window.showErrorMessage('Invalid delete comment request');
       return;
     }
 
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
-      vscode.window.showErrorMessage(localize('error.noActiveEditor', 'No active editor'));
+      vscode.window.showErrorMessage('No active editor');
       return;
     }
 
     const approval = this.approvalEditorService.getActiveApprovalForEditor(editor);
     if (!approval || !approval.comments) {
-      vscode.window.showErrorMessage(localize('error.noApprovalOrComments', 'No approval or comments found'));
+      vscode.window.showErrorMessage('No approval or comments found');
       return;
     }
 
     const commentIndex = approval.comments.findIndex(c => c.id === args.commentId);
     if (commentIndex === -1) {
-      vscode.window.showErrorMessage(localize('error.commentNotFound', 'Comment not found'));
+      vscode.window.showErrorMessage('Comment not found');
       return;
     }
 
     const comment = approval.comments[commentIndex];
 
     // Show confirmation dialog
-    const deleteButton = localize('deleteComment.deleteButton', 'Delete Comment');
-    const cancelButton = localize('deleteComment.cancelButton', 'Cancel');
     const deleteConfirm = await vscode.window.showWarningMessage(
-      localize('deleteComment.confirmation', 'Are you sure you want to delete this comment?\n\n"{0}"', `${comment.text.substring(0, 100)}${comment.text.length > 100 ? '...' : ''}`),
+      `Are you sure you want to delete this comment?\n\n"${comment.text.substring(0, 100)}${comment.text.length > 100 ? '...' : ''}"`,
       { modal: true },
-      deleteButton,
-      cancelButton
+      'Delete Comment',
+      'Cancel'
     );
 
-    if (deleteConfirm !== deleteButton) {
+    if (deleteConfirm !== 'Delete Comment') {
       return; // User cancelled
     }
 
@@ -338,57 +333,51 @@ export class ApprovalCommandService {
       // Save the updated approval using proper state management
       await this.approvalEditorService.saveApprovalData(approval);
       
-      vscode.window.showInformationMessage(localize('deleteComment.success', '🗑️ Comment deleted successfully'));
+      vscode.window.showInformationMessage('🗑️ Comment deleted successfully');
     } catch (error) {
-      vscode.window.showErrorMessage(localize('deleteComment.failed', 'Failed to delete comment: {0}', String(error)));
+      vscode.window.showErrorMessage(`Failed to delete comment: ${error}`);
     }
   }
 
   private async showApprovalActions() {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
-      vscode.window.showErrorMessage(localize('error.noActiveEditor', 'No active editor'));
+      vscode.window.showErrorMessage('No active editor');
       return;
     }
 
     const approval = this.approvalEditorService.getActiveApprovalForEditor(editor);
     if (!approval) {
-      vscode.window.showErrorMessage(localize('error.noActiveApproval', 'No active approval found'));
+      vscode.window.showErrorMessage('No active approval found');
       return;
     }
 
-    const approveAction = localize('actions.approve', '✅ Approve');
-    const rejectAction = localize('actions.reject', '❌ Reject');
-    const revisionAction = localize('actions.requestRevision', '🔄 Request Revision');
-    const addCommentAction = localize('actions.addComment', '💬 Add Comment to Selection');
-    const viewDetailsAction = localize('actions.viewDetails', '📋 View Approval Details');
-
     const actions = [
-      approveAction,
-      rejectAction,
-      revisionAction,
-      addCommentAction,
-      viewDetailsAction
+      '✅ Approve',
+      '❌ Reject',
+      '🔄 Request Revision',
+      '💬 Add Comment to Selection',
+      '📋 View Approval Details'
     ];
 
     const selectedAction = await vscode.window.showQuickPick(actions, {
-      placeHolder: localize('actions.placeholder', 'Select action for approval: {0}', approval.title)
+      placeHolder: `Select action for approval: ${approval.title}`
     });
 
     switch (selectedAction) {
-      case approveAction:
+      case '✅ Approve':
         await this.approveFromEditor({ id: approval.id });
         break;
-      case rejectAction:
+      case '❌ Reject':
         await this.rejectFromEditor({ id: approval.id });
         break;
-      case revisionAction:
+      case '🔄 Request Revision':
         await this.requestRevisionFromEditor({ id: approval.id });
         break;
-      case addCommentAction:
+      case '💬 Add Comment to Selection':
         await this.addCommentToSelection();
         break;
-      case viewDetailsAction:
+      case '📋 View Approval Details':
         await this.showApprovalDetails(approval);
         break;
     }

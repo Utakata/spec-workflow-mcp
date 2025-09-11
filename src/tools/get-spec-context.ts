@@ -4,21 +4,21 @@ import { PathUtils } from '../core/path-utils.js';
 import { readFile, access, readdir } from 'fs/promises';
 import { join } from 'path';
 import { constants } from 'fs';
-import { translate } from '../core/i18n.js';
+import i18n from '../core/i18n.js';
 
 export const getSpecContextTool: Tool = {
   name: 'get-spec-context',
-  description: translate('tools.getSpecContext.description'),
+  description: i18n.t('tools.getSpecContext.description'),
   inputSchema: {
     type: 'object',
     properties: {
       projectPath: { 
         type: 'string',
-        description: translate('tools.getSpecContext.projectPathDescription')
+        description: i18n.t('tools.getSpecContext.projectPathDescription')
       },
       specName: {
         type: 'string',
-        description: translate('tools.getSpecContext.specNameDescription')
+        description: i18n.t('tools.getSpecContext.specNameDescription')
       }
     },
     required: ['projectPath', 'specName']
@@ -27,7 +27,6 @@ export const getSpecContextTool: Tool = {
 
 export async function getSpecContextHandler(args: any, context: ToolContext): Promise<ToolResponse> {
   const { projectPath, specName } = args;
-  const lang = context.lang || 'en';
 
   try {
     const specPath = PathUtils.getSpecPath(projectPath, specName);
@@ -48,15 +47,15 @@ export async function getSpecContextHandler(args: any, context: ToolContext): Pr
         if (specNames.length > 0) {
           return {
             success: false,
-            message: translate('tools.getSpecContext.errors.notFound', lang, { specName }),
+            message: i18n.t('tools.getSpecContext.notFound', { specName }),
             data: {
               availableSpecs: specNames,
               suggestedSpecs: specNames.slice(0, 3) // Show first 3 as suggestions
             },
             nextSteps: [
-              translate('tools.getSpecContext.errors.availableSpecs', lang, { specs: specNames.join(', ') }),
-              translate('tools.getSpecContext.errors.nextSteps.useExisting', lang),
-              translate('tools.getSpecContext.errors.nextSteps.createNew', lang)
+              i18n.t('tools.getSpecContext.availableSpecs', { specs: specNames.join(', ') }),
+              i18n.t('tools.getSpecContext.useExisting'),
+              i18n.t('tools.getSpecContext.orCreate')
             ]
           };
         }
@@ -66,19 +65,19 @@ export async function getSpecContextHandler(args: any, context: ToolContext): Pr
 
       return {
         success: false,
-        message: translate('tools.getSpecContext.errors.notFound', lang, { specName }),
+        message: i18n.t('tools.getSpecContext.notFound', { specName }),
         nextSteps: [
-          translate('tools.getSpecContext.errors.nextSteps.create', lang),
-          translate('tools.getSpecContext.errors.nextSteps.checkSpelling', lang),
-          translate('tools.getSpecContext.errors.nextSteps.verifySetup', lang)
+          i18n.t('tools.getSpecContext.createSpec'),
+          i18n.t('tools.getSpecContext.checkSpelling'),
+          i18n.t('tools.getSpecContext.verifySetup')
         ]
       };
     }
 
     const specFiles = [
-      { name: 'requirements.md', title: translate('tools.getSpecContext.docTitles.requirements', lang) },
-      { name: 'design.md', title: translate('tools.getSpecContext.docTitles.design', lang) },
-      { name: 'tasks.md', title: translate('tools.getSpecContext.docTitles.tasks', lang) }
+      { name: 'requirements.md', title: i18n.t('tools.getSpecContext.requirements') },
+      { name: 'design.md', title: i18n.t('tools.getSpecContext.design') },
+      { name: 'tasks.md', title: i18n.t('tools.getSpecContext.tasks') }
     ];
 
     const sections: string[] = [];
@@ -108,26 +107,29 @@ export async function getSpecContextHandler(args: any, context: ToolContext): Pr
     if (!hasContent) {
       return {
         success: true,
-        message: translate('tools.getSpecContext.messages.emptyDocs', lang, { specName }),
+        message: i18n.t('tools.getSpecContext.emptyDocs', { specName }),
         data: {
-          context: translate('tools.getSpecContext.messages.emptyContext', lang, { specName }),
+          context: `## ${i18n.t('tools.getSpecContext.requirements')}\n\n${i18n.t('tools.getSpecContext.noDocsFound', { specName })}`,
           specName,
           documents: documentStatus
         },
         nextSteps: [
-          translate('tools.getSpecContext.nextSteps.empty.addContent', lang, { specName }),
-          translate('tools.getSpecContext.nextSteps.empty.createMissing', lang),
-          translate('tools.getSpecContext.nextSteps.empty.ensureContent', lang)
+          i18n.t('tools.getSpecContext.addContent', { specName }),
+          i18n.t('tools.getSpecContext.createMissing'),
+          i18n.t('tools.getSpecContext.ensureContent')
         ]
       };
     }
 
     // Format the complete specification context
-    const formattedContext = translate('tools.getSpecContext.messages.fullContext', lang, { specName, sections: sections.join('\n\n---\n\n') });
+    const formattedContext = i18n.t('tools.getSpecContext.loadedContext', {
+      specName,
+      sections: sections.join('\n\n---\n\n')
+    });
 
     return {
       success: true,
-      message: translate('tools.getSpecContext.successMessage', lang, { specName }),
+      message: i18n.t('tools.getSpecContext.successMessage', { specName }),
       data: {
         context: formattedContext,
         specName,
@@ -136,9 +138,9 @@ export async function getSpecContextHandler(args: any, context: ToolContext): Pr
         specPath
       },
       nextSteps: [
-        translate('tools.getSpecContext.nextSteps.success.proceed', lang),
-        translate('tools.getSpecContext.nextSteps.success.reference', lang),
-        translate('tools.getSpecContext.nextSteps.success.updateStatus', lang)
+        i18n.t('tools.getSpecContext.proceed'),
+        i18n.t('tools.getSpecContext.referenceDocs'),
+        i18n.t('tools.getSpecContext.updateStatus')
       ],
       projectContext: {
         projectPath,
@@ -150,12 +152,12 @@ export async function getSpecContextHandler(args: any, context: ToolContext): Pr
   } catch (error: any) {
     return {
       success: false,
-      message: translate('tools.getSpecContext.errors.genericFail', lang, { message: error.message }),
+      message: i18n.t('tools.getSpecContext.failureMessage', { errorMessage: error.message }),
       nextSteps: [
-        translate('tools.getSpecContext.errors.nextSteps.checkPath', lang),
-        translate('tools.getSpecContext.errors.nextSteps.verifyName', lang),
-        translate('tools.getSpecContext.errors.nextSteps.checkPermissions', lang),
-        translate('tools.getSpecContext.errors.nextSteps.createIfMissing', lang)
+        i18n.t('tools.getSpecContext.checkPath'),
+        i18n.t('tools.getSpecContext.verifySpecName'),
+        i18n.t('tools.getSpecContext.checkPermissions'),
+        i18n.t('tools.getSpecContext.createIfMissing')
       ]
     };
   }

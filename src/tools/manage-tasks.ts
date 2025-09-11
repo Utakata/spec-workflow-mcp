@@ -4,36 +4,36 @@ import { PathUtils } from '../core/path-utils.js';
 import { readFile, writeFile } from 'fs/promises';
 import { join } from 'path';
 import { parseTasksFromMarkdown, updateTaskStatus, findNextPendingTask, getTaskById } from '../core/task-parser.js';
-import { translate } from '../core/i18n.js';
+import i18n from '../core/i18n.js';
 
 export const manageTasksTool: Tool = {
   name: 'manage-tasks',
-  description: translate('tools.manageTasks.description'),
+  description: i18n.t('tools.manageTasks.description'),
   inputSchema: {
     type: 'object',
     properties: {
       projectPath: { 
         type: 'string',
-        description: translate('tools.manageTasks.projectPathDescription')
+        description: i18n.t('tools.manageTasks.projectPathDescription')
       },
       specName: { 
         type: 'string',
-        description: translate('tools.manageTasks.specNameDescription')
+        description: i18n.t('tools.manageTasks.specNameDescription')
       },
       action: {
         type: 'string',
         enum: ['list', 'get', 'set-status', 'next-pending', 'context'],
-        description: translate('tools.manageTasks.actionDescription'),
+        description: i18n.t('tools.manageTasks.actionDescription'),
         default: 'list'
       },
       taskId: { 
         type: 'string',
-        description: translate('tools.manageTasks.taskIdDescription')
+        description: i18n.t('tools.manageTasks.taskIdDescription')
       },
       status: {
         type: 'string',
         enum: ['pending', 'in-progress', 'completed'],
-        description: translate('tools.manageTasks.statusDescription')
+        description: i18n.t('tools.manageTasks.statusDescription')
       }
     },
     required: ['projectPath', 'specName']
@@ -42,7 +42,6 @@ export const manageTasksTool: Tool = {
 
 export async function manageTasksHandler(args: any, context: ToolContext): Promise<ToolResponse> {
   const { projectPath, specName, action = 'list', taskId, status } = args;
-  const lang = context.lang || 'en';
 
   try {
     // Path to tasks.md
@@ -56,9 +55,9 @@ export async function manageTasksHandler(args: any, context: ToolContext): Promi
     if (tasks.length === 0) {
       return {
         success: true,
-        message: translate('tools.manageTasks.messages.noTasksFound', lang),
+        message: i18n.t('tools.manageTasks.noTasksFound'),
         data: { tasks: [] },
-        nextSteps: [translate('tools.manageTasks.nextSteps.createTasks', lang)]
+        nextSteps: [i18n.t('tools.manageTasks.createTasksMd')]
       };
     }
     
@@ -67,15 +66,15 @@ export async function manageTasksHandler(args: any, context: ToolContext): Promi
       case 'list':
         return {
           success: true,
-          message: translate('tools.manageTasks.messages.listSummary', lang, { ...parseResult.summary }),
+          message: i18n.t('tools.manageTasks.listSummary', parseResult.summary),
           data: { 
             tasks,
             summary: parseResult.summary
           },
           nextSteps: [
-            translate('tools.manageTasks.nextSteps.list.nextPending', lang),
-            translate('tools.manageTasks.nextSteps.list.getDetails', lang),
-            translate('tools.manageTasks.nextSteps.list.updateStatus', lang)
+            i18n.t('tools.manageTasks.listNextStep1'),
+            i18n.t('tools.manageTasks.listNextStep2'),
+            i18n.t('tools.manageTasks.listNextStep3')
           ]
         };
         
@@ -83,8 +82,8 @@ export async function manageTasksHandler(args: any, context: ToolContext): Promi
         if (!taskId) {
           return {
             success: false,
-            message: translate('tools.manageTasks.errors.get.taskIdRequired', lang),
-            nextSteps: [translate('tools.manageTasks.errors.get.provideTaskId', lang)]
+            message: i18n.t('tools.manageTasks.taskIdRequiredForGet'),
+            nextSteps: [i18n.t('tools.manageTasks.provideTaskIdExample')]
           };
         }
         
@@ -92,22 +91,23 @@ export async function manageTasksHandler(args: any, context: ToolContext): Promi
         if (!task) {
           return {
             success: false,
-            message: translate('tools.manageTasks.errors.get.notFound', lang, { taskId }),
-            nextSteps: [translate('tools.manageTasks.errors.get.useList', lang)]
+            message: i18n.t('tools.manageTasks.taskNotFound', { taskId }),
+            nextSteps: [i18n.t('tools.manageTasks.useList')]
           };
         }
         
-        const nextStep = task.status === 'completed'
-              ? translate('tools.manageTasks.nextSteps.get.completed', lang)
-              : task.status === 'in-progress'
-              ? translate('tools.manageTasks.nextSteps.get.inProgress', lang)
-              : translate('tools.manageTasks.nextSteps.get.pending', lang);
-
         return {
           success: true,
-          message: translate('tools.manageTasks.messages.get.success', lang, { taskId, description: task.description }),
+          message: i18n.t('tools.manageTasks.taskInfo', { taskId, description: task.description }),
           data: { task },
-          nextSteps: [nextStep, translate('tools.manageTasks.nextSteps.get.useContext', lang)]
+          nextSteps: [
+            task.status === 'completed'
+              ? i18n.t('tools.manageTasks.taskAlreadyCompleted')
+              : task.status === 'in-progress'
+              ? i18n.t('tools.manageTasks.taskInProgress')
+              : i18n.t('tools.manageTasks.setStatusInProgress'),
+            i18n.t('tools.manageTasks.useContext')
+          ]
         };
       }
         
@@ -118,35 +118,35 @@ export async function manageTasksHandler(args: any, context: ToolContext): Promi
           if (inProgressTasks.length > 0) {
             return {
               success: true,
-              message: translate('tools.manageTasks.messages.nextPending.inProgress', lang, { count: inProgressTasks.length }),
+              message: i18n.t('tools.manageTasks.noPendingTasks', { count: inProgressTasks.length }),
               data: { 
                 nextTask: null,
                 inProgressTasks 
               },
               nextSteps: [
-                translate('tools.manageTasks.nextSteps.nextPending.continue', lang, { ids: inProgressTasks.map(t => t.id).join(', ') }),
-                translate('tools.manageTasks.nextSteps.nextPending.markComplete', lang)
+                i18n.t('tools.manageTasks.continueTasks', { taskIds: inProgressTasks.map(t => t.id).join(', ') }),
+                i18n.t('tools.manageTasks.markCompleted')
               ]
             };
           }
           return {
             success: true,
-            message: translate('tools.manageTasks.messages.nextPending.allCompleted', lang),
+            message: i18n.t('tools.manageTasks.allTasksCompleted'),
             data: { nextTask: null },
             nextSteps: [
-              translate('tools.manageTasks.nextSteps.nextPending.implementationComplete', lang),
-              translate('tools.manageTasks.nextSteps.nextPending.runTests', lang)
+              i18n.t('tools.manageTasks.implementationComplete'),
+              i18n.t('tools.manageTasks.runTests')
             ]
           };
         }
         
         return {
           success: true,
-          message: translate('tools.manageTasks.messages.nextPending.success', lang, { id: nextTask.id, description: nextTask.description }),
+          message: i18n.t('tools.manageTasks.nextPendingTask', { id: nextTask.id, description: nextTask.description }),
           data: { nextTask },
           nextSteps: [
-            translate('tools.manageTasks.nextSteps.nextPending.setStatus', lang, { taskId: nextTask.id }),
-            translate('tools.manageTasks.nextSteps.nextPending.useContext', lang)
+            i18n.t('tools.manageTasks.setNextTaskInProgress', { id: nextTask.id }),
+            i18n.t('tools.manageTasks.useContext')
           ]
         };
       }
@@ -155,16 +155,16 @@ export async function manageTasksHandler(args: any, context: ToolContext): Promi
         if (!taskId) {
           return {
             success: false,
-            message: translate('tools.manageTasks.errors.setStatus.taskIdRequired', lang),
-            nextSteps: [translate('tools.manageTasks.errors.setStatus.provideTaskId', lang)]
+            message: i18n.t('tools.manageTasks.taskIdRequiredForSetStatus'),
+            nextSteps: [i18n.t('tools.manageTasks.provideTaskId')]
           };
         }
 
         if (!status) {
           return {
             success: false,
-            message: translate('tools.manageTasks.errors.setStatus.statusRequired', lang),
-            nextSteps: [translate('tools.manageTasks.errors.setStatus.provideStatus', lang)]
+            message: i18n.t('tools.manageTasks.statusRequired'),
+            nextSteps: [i18n.t('tools.manageTasks.provideStatus')]
           };
         }
 
@@ -172,8 +172,8 @@ export async function manageTasksHandler(args: any, context: ToolContext): Promi
         if (!taskToUpdate) {
           return {
             success: false,
-            message: translate('tools.manageTasks.errors.setStatus.notFound', lang, { taskId }),
-            nextSteps: [translate('tools.manageTasks.errors.setStatus.useList', lang)]
+            message: i18n.t('tools.manageTasks.taskNotFound', { taskId }),
+            nextSteps: [i18n.t('tools.manageTasks.useList')]
           };
         }
 
@@ -183,23 +183,20 @@ export async function manageTasksHandler(args: any, context: ToolContext): Promi
         if (updatedContent === tasksContent) {
           return {
             success: false,
-            message: translate('tools.manageTasks.errors.setStatus.updateFailed', lang, { taskId }),
+            message: i18n.t('tools.manageTasks.couldNotFindTaskToUpdate', { taskId }),
             nextSteps: [
-              translate('tools.manageTasks.errors.setStatus.checkId', lang),
-              translate('tools.manageTasks.errors.setStatus.checkFormat', lang)
+              i18n.t('tools.manageTasks.checkTaskId'),
+              i18n.t('tools.manageTasks.checkTaskFormat')
             ]
           };
         }
 
         await writeFile(tasksPath, updatedContent, 'utf-8');
-        
-        const nextStep = status === 'in-progress' ? translate('tools.manageTasks.nextSteps.setStatus.inProgress', lang) :
-                         status === 'completed' ? translate('tools.manageTasks.nextSteps.setStatus.completed', lang) :
-                         translate('tools.manageTasks.nextSteps.setStatus.pending', lang);
+
 
         return {
           success: true,
-          message: translate('tools.manageTasks.messages.setStatus.success', lang, { taskId, status }),
+          message: i18n.t('tools.manageTasks.taskUpdated', { taskId, status }),
           data: { 
             taskId,
             previousStatus: taskToUpdate.status,
@@ -207,9 +204,11 @@ export async function manageTasksHandler(args: any, context: ToolContext): Promi
             updatedTask: { ...taskToUpdate, status }
           },
           nextSteps: [
-            translate('tools.manageTasks.nextSteps.setStatus.saved', lang),
-            nextStep,
-            translate('tools.manageTasks.nextSteps.setStatus.checkProgress', lang)
+            i18n.t('tools.manageTasks.statusSaved'),
+            status === 'in-progress' ? i18n.t('tools.manageTasks.beginImplementation') :
+            status === 'completed' ? i18n.t('tools.manageTasks.useNextPending') :
+            i18n.t('tools.manageTasks.taskMarkedPending'),
+            i18n.t('tools.manageTasks.checkProgress')
           ],
           projectContext: {
             projectPath,
@@ -225,8 +224,8 @@ export async function manageTasksHandler(args: any, context: ToolContext): Promi
         if (!taskId) {
           return {
             success: false,
-            message: translate('tools.manageTasks.errors.context.taskIdRequired', lang),
-            nextSteps: [translate('tools.manageTasks.errors.context.provideTaskId', lang)]
+            message: i18n.t('tools.manageTasks.taskIdRequiredForContext'),
+            nextSteps: [i18n.t('tools.manageTasks.provideTaskIdForContext')]
           };
         }
         
@@ -234,8 +233,8 @@ export async function manageTasksHandler(args: any, context: ToolContext): Promi
         if (!task) {
           return {
             success: false,
-            message: translate('tools.manageTasks.errors.context.notFound', lang, { taskId }),
-            nextSteps: [translate('tools.manageTasks.errors.context.useList', lang)]
+            message: i18n.t('tools.manageTasks.taskNotFound', { taskId }),
+            nextSteps: [i18n.t('tools.manageTasks.useList')]
           };
         }
         
@@ -246,50 +245,51 @@ export async function manageTasksHandler(args: any, context: ToolContext): Promi
         
         try {
           const requirementsContent = await readFile(join(specDir, 'requirements.md'), 'utf-8');
-          requirementsContext = translate('tools.manageTasks.messages.context.requirementsHeader', lang) + `\n${requirementsContent}`;
+          requirementsContext = i18n.t('tools.manageTasks.requirementsContext', { content: requirementsContent });
         } catch {
           // Requirements file doesn't exist or can't be read
         }
         
         try {
           const designContent = await readFile(join(specDir, 'design.md'), 'utf-8');
-          designContext = translate('tools.manageTasks.messages.context.designHeader', lang) + `\n${designContent}`;
+          designContext = i18n.t('tools.manageTasks.designContext', { content: designContent });
         } catch {
           // Design file doesn't exist or can't be read
         }
 
-        const nextStep2 = task.status === 'pending' ? translate('tools.manageTasks.messages.context.nextSteps.pending', lang, { taskId }) :
-                          task.status === 'in-progress' ? translate('tools.manageTasks.messages.context.nextSteps.inProgress', lang) :
-                          translate('tools.manageTasks.messages.context.nextSteps.completed', lang);
+        const statusStep = task.status === 'pending'
+          ? `Mark task as in-progress: manage-tasks with action: "set-status", taskId: "${taskId}", status: "in-progress"`
+          : task.status === 'in-progress'
+          ? 'Continue implementation work'
+          : 'Task is already completed';
 
-        const nextStep4 = task.leverage ? translate('tools.manageTasks.messages.context.nextSteps.leverage', lang, { leverage: task.leverage }) :
-                          translate('tools.manageTasks.messages.context.nextSteps.noLeverage', lang);
+        const leverageStep = task.leverage
+          ? `Leverage the existing code mentioned: ${task.leverage}`
+          : 'Build according to the design patterns';
 
-        const nextStep5 = task.status !== 'completed' ? translate('tools.manageTasks.messages.context.nextSteps.markComplete', lang, { taskId }) : '';
+        const completionStep = task.status !== 'completed'
+          ? `Mark as completed when finished: manage-tasks with action: "set-status", taskId: "${taskId}", status: "completed"`
+          : '';
 
-        const fullContext = translate('tools.manageTasks.messages.context.fullContext', lang, {
-          taskId,
+        const fullContext = i18n.t('tools.manageTasks.implementationContext', {
+          taskId: task.id,
           id: task.id,
           status: task.status,
           description: task.description,
-          requirements: task.requirements && task.requirements.length > 0 ? translate('tools.manageTasks.messages.context.requirementsRef', lang, { requirements: task.requirements.join(', ') }) : '',
-          leverage: task.leverage ? translate('tools.manageTasks.messages.context.leverage', lang, { leverage: task.leverage }) : '',
-          implementationNotes: task.implementationDetails && task.implementationDetails.length > 0 ? translate('tools.manageTasks.messages.context.implementationNotes', lang, { notes: task.implementationDetails.map(d => `- ${d}`).join('\n') }) : '',
+          requirements: task.requirements && task.requirements.length > 0 ? `**Requirements Reference:** ${task.requirements.join(', ')}\n` : '',
+          leverage: task.leverage ? `**Leverage Existing:** ${task.leverage}\n` : '',
+          implementationDetails: task.implementationDetails && task.implementationDetails.length > 0 ? `**Implementation Notes:**\n${task.implementationDetails.map(d => `- ${d}`).join('\n')}\n` : '',
           requirementsContext,
           designContext,
           separator: requirementsContext && designContext ? '---\n' : '',
-          nextStep2,
-          nextStep4,
-          nextStep5
-         });
+          statusStep,
+          leverageStep,
+          completionStep
+        });
         
-        const nextStepContext = task.status === 'pending' ? translate('tools.manageTasks.nextSteps.context.pending', lang) :
-                                task.status === 'in-progress' ? translate('tools.manageTasks.nextSteps.context.inProgress', lang) :
-                                translate('tools.manageTasks.nextSteps.context.completed', lang);
-
         return {
           success: true,
-          message: translate('tools.manageTasks.messages.context.success', lang, { taskId }),
+          message: i18n.t('tools.manageTasks.implementationContextLoaded', { taskId }),
           data: { 
             task,
             context: fullContext,
@@ -297,9 +297,11 @@ export async function manageTasksHandler(args: any, context: ToolContext): Promi
             hasDesign: designContext !== ''
           },
           nextSteps: [
-            translate('tools.manageTasks.nextSteps.context.review', lang),
-            nextStepContext,
-            translate('tools.manageTasks.nextSteps.context.useGuidance', lang)
+            i18n.t('tools.manageTasks.reviewContext'),
+            task.status === 'pending' ? i18n.t('tools.manageTasks.setStatusInProgress') :
+            task.status === 'in-progress' ? i18n.t('tools.manageTasks.continueImplementation') :
+            i18n.t('tools.manageTasks.taskCompleted'),
+            i18n.t('tools.manageTasks.useRequirementsAndDesign')
           ]
         };
       }
@@ -307,8 +309,8 @@ export async function manageTasksHandler(args: any, context: ToolContext): Promi
       default:
         return {
           success: false,
-          message: translate('tools.manageTasks.errors.unknownAction', lang, { action }),
-          nextSteps: [translate('tools.manageTasks.errors.validActions', lang)]
+          message: i18n.t('tools.manageTasks.unknownAction', { action }),
+          nextSteps: [i18n.t('tools.manageTasks.validActions')]
         };
     }
     
@@ -316,21 +318,21 @@ export async function manageTasksHandler(args: any, context: ToolContext): Promi
     if (error.code === 'ENOENT') {
       return {
         success: false,
-        message: translate('tools.manageTasks.errors.noTasksMd', lang, { specName }),
+        message: i18n.t('tools.manageTasks.tasksMdNotFound', { specName }),
         nextSteps: [
-          translate('tools.manageTasks.errors.nextSteps.createTasks', lang),
-          translate('tools.manageTasks.errors.nextSteps.ensureSpecExists', lang)
+          i18n.t('tools.manageTasks.createTasksDocFirst'),
+          i18n.t('tools.manageTasks.ensureSpecExists')
         ]
       };
     }
     
     return {
       success: false,
-      message: translate('tools.manageTasks.errors.genericFail', lang, { message: error.message }),
+      message: i18n.t('tools.manageTasks.failedToManageTasks', { errorMessage: error.message }),
       nextSteps: [
-        translate('tools.manageTasks.errors.nextSteps.checkSpecExists', lang),
-        translate('tools.manageTasks.errors.nextSteps.checkPermissions', lang),
-        translate('tools.manageTasks.errors.nextSteps.checkFormat', lang)
+        i18n.t('tools.manageTasks.checkSpecExists'),
+        i18n.t('tools.manageTasks.checkPermissions'),
+        i18n.t('tools.manageTasks.ensureTasksFormatted')
       ]
     };
   }

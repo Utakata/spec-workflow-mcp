@@ -1,7 +1,7 @@
 {
   "name": "spec-workflow-mcp",
-  "displayName": "%displayName%",
-  "description": "%description%",
+  "displayName": "Spec Workflow MCP",
+  "description": "VSCode extension for Spec-Workflow-MCP with integrated dashboard",
   "version": "0.0.4",
   "publisher": "Pimzino",
   "license": "GPL-3.0",
@@ -31,56 +31,56 @@
     "commands": [
       {
         "command": "spec-workflow.openDashboard",
-        "title": "%command.openDashboard%",
+        "title": "Open Spec Workflow Dashboard",
         "category": "Spec Workflow"
       },
       {
         "command": "spec-workflow.refreshData",
-        "title": "%command.refreshData%",
+        "title": "Refresh Data",
         "category": "Spec Workflow",
         "icon": "$(refresh)"
       },
       {
         "command": "spec-workflow.openSpec",
-        "title": "%command.openSpec%",
+        "title": "Open Spec",
         "category": "Spec Workflow"
       },
       {
         "command": "spec-workflow.approveFromEditor",
-        "title": "%command.approve%",
+        "title": "Approve",
         "category": "Spec Workflow"
       },
       {
         "command": "spec-workflow.rejectFromEditor",
-        "title": "%command.reject%",
+        "title": "Reject",
         "category": "Spec Workflow"
       },
       {
         "command": "spec-workflow.requestRevisionFromEditor",
-        "title": "%command.requestRevision%",
+        "title": "Request Revision",
         "category": "Spec Workflow"
       },
       {
         "command": "spec-workflow.addCommentToSelection",
-        "title": "%command.addComment%",
+        "title": "Add Comment",
         "category": "Spec Workflow",
         "icon": "$(comment-add)"
       },
       {
         "command": "spec-workflow.editComment",
-        "title": "%command.editComment%",
+        "title": "Edit Comment",
         "category": "Spec Workflow",
         "icon": "$(edit)"
       },
       {
         "command": "spec-workflow.deleteComment",
-        "title": "%command.deleteComment%",
+        "title": "Delete Comment",
         "category": "Spec Workflow",
         "icon": "$(trash)"
       },
       {
         "command": "spec-workflow.showApprovalActions",
-        "title": "%command.showApprovalActions%",
+        "title": "Approval Actions",
         "category": "Spec Workflow"
       }
     ],
@@ -89,7 +89,7 @@
         {
           "type": "webview",
           "id": "spec-workflow.sidebar",
-          "name": "%view.dashboard%",
+          "name": "Dashboard",
           "when": "workspaceFolderCount > 0",
           "icon": "./icons/activity-bar-icon.svg"
         }
@@ -99,7 +99,7 @@
       "activitybar": [
         {
           "id": "spec-workflow",
-          "title": "%view.containerTitle%",
+          "title": "Spec Workflow",
           "icon": "./icons/activity-bar-icon.svg"
         }
       ]
@@ -156,13 +156,13 @@
       ]
     },
     "configuration": {
-      "title": "%config.title%",
+      "title": "Spec Workflow",
       "properties": {
         "specWorkflow.notifications.sounds.enabled": {
           "type": "boolean",
           "default": true,
           "scope": "window",
-          "description": "%config.sounds.enabled.description%"
+          "description": "Enable sound notifications for spec workflow events"
         },
         "specWorkflow.notifications.sounds.volume": {
           "type": "number",
@@ -170,19 +170,19 @@
           "minimum": 0,
           "maximum": 1,
           "scope": "window",
-          "description": "%config.sounds.volume.description%"
+          "description": "Volume level for sound notifications (0.0 to 1.0)"
         },
         "specWorkflow.notifications.sounds.approvalSound": {
           "type": "boolean",
           "default": true,
           "scope": "window",
-          "description": "%config.sounds.approvalSound.description%"
+          "description": "Play sound when new approval requests are pending"
         },
         "specWorkflow.notifications.sounds.taskCompletionSound": {
           "type": "boolean",
           "default": true,
           "scope": "window",
-          "description": "%config.sounds.taskCompletionSound.description%"
+          "description": "Play sound when tasks are completed"
         }
       }
     }
@@ -222,8 +222,7 @@
     "tailwindcss": "^4.0.0",
     "tw-animate-css": "^1.3.7",
     "typescript": "^5.7.3",
-    "vite": "^6.0.3",
-    "vscode-nls-dev": "^4.0.4"
+    "vite": "^6.0.3"
   },
   "dependencies": {
     "@jaames/iro": "^5.5.2",
@@ -236,13 +235,9 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "i18next": "^25.5.2",
-    "i18next-browser-languagedetector": "^8.2.0",
     "lucide-react": "^0.468.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "react-i18next": "^15.7.3",
-    "tailwind-merge": "^2.6.0",
-    "vscode-nls": "^5.2.0"
+    "tailwind-merge": "^2.6.0"
   }
 }

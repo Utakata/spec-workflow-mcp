@@ -4,29 +4,29 @@ import { PathUtils } from '../core/path-utils.js';
 import { readFile } from 'fs/promises';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { translate } from '../core/i18n.js';
+import i18n from '../core/i18n.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export const getTemplateContextTool: Tool = {
   name: 'get-template-context',
-  description: translate('tools.getTemplateContext.description'),
+  description: i18n.t('tools.getTemplateContext.description'),
   inputSchema: {
     type: 'object',
     properties: {
       projectPath: { 
         type: 'string',
-        description: translate('tools.getTemplateContext.projectPathDescription')
+        description: i18n.t('tools.getTemplateContext.projectPathDescription')
       },
       templateType: { 
         type: 'string',
         enum: ['spec', 'steering'],
-        description: translate('tools.getTemplateContext.templateTypeDescription')
+        description: i18n.t('tools.getTemplateContext.templateTypeDescription')
       },
       template: {
         type: 'string',
         enum: ['requirements', 'design', 'tasks', 'product', 'tech', 'structure'],
-        description: translate('tools.getTemplateContext.templateDescription')
+        description: i18n.t('tools.getTemplateContext.templateDescription')
       }
     },
     required: ['projectPath', 'templateType', 'template']
@@ -39,7 +39,6 @@ export async function getTemplateContextHandler(args: any, context: ToolContext)
     templateType: 'spec' | 'steering';
     template: 'requirements' | 'design' | 'tasks' | 'product' | 'tech' | 'structure';
   };
-  const lang = context.lang || 'en';
 
   try {
     const templatesPath = join(__dirname, '..', 'markdown', 'templates');
@@ -47,14 +46,14 @@ export async function getTemplateContextHandler(args: any, context: ToolContext)
     // Define template mappings
     const templateMap = {
       spec: {
-        requirements: { file: 'requirements-template.md', title: translate('tools.getTemplateContext.docTitles.requirements', lang) },
-        design: { file: 'design-template.md', title: translate('tools.getTemplateContext.docTitles.design', lang) },
-        tasks: { file: 'tasks-template.md', title: translate('tools.getTemplateContext.docTitles.tasks', lang) }
+        requirements: { file: 'requirements-template.md', title: i18n.t('tools.getTemplateContext.requirementsTemplate') },
+        design: { file: 'design-template.md', title: i18n.t('tools.getTemplateContext.designTemplate') },
+        tasks: { file: 'tasks-template.md', title: i18n.t('tools.getTemplateContext.tasksTemplate') }
       },
       steering: {
-        product: { file: 'product-template.md', title: translate('tools.getTemplateContext.docTitles.product', lang) },
-        tech: { file: 'tech-template.md', title: translate('tools.getTemplateContext.docTitles.tech', lang) },
-        structure: { file: 'structure-template.md', title: translate('tools.getTemplateContext.docTitles.structure', lang) }
+        product: { file: 'product-template.md', title: i18n.t('tools.getTemplateContext.productTemplate') },
+        tech: { file: 'tech-template.md', title: i18n.t('tools.getTemplateContext.techTemplate') },
+        structure: { file: 'structure-template.md', title: i18n.t('tools.getTemplateContext.structureTemplate') }
       }
     };
 
@@ -62,23 +61,22 @@ export async function getTemplateContextHandler(args: any, context: ToolContext)
     if (!templateMap[templateType]) {
       return {
         success: false,
-        message: translate('tools.getTemplateContext.errors.invalidType', lang, { templateType }),
-        nextSteps: [translate('tools.getTemplateContext.errors.validTypes', lang)]
+        message: i18n.t('tools.getTemplateContext.invalidType', { templateType }),
+        nextSteps: [i18n.t('tools.getTemplateContext.useSpecOrSteering')]
       };
     }
 
     const templateGroup = templateMap[templateType] as any;
     if (!templateGroup[template]) {
       const validTemplates = Object.keys(templateGroup).join(', ');
-      const validTemplatesForType = templateType === 'spec'
-        ? translate('tools.getTemplateContext.errors.validSpecTemplates', lang)
-        : translate('tools.getTemplateContext.errors.validSteeringTemplates', lang);
       return {
         success: false,
-        message: translate('tools.getTemplateContext.errors.invalidTemplateForType', lang, { template, templateType }),
+        message: i18n.t('tools.getTemplateContext.invalidTemplate', { template, templateType }),
         nextSteps: [
-          translate('tools.getTemplateContext.errors.validTemplates', lang, { validTemplates }),
-          validTemplatesForType
+          i18n.t('tools.getTemplateContext.validTemplates', { templates: validTemplates }),
+          templateType === 'spec'
+            ? i18n.t('tools.getTemplateContext.useSpecTemplates')
+            : i18n.t('tools.getTemplateContext.useSteeringTemplates')
         ]
       };
     }
@@ -93,24 +91,28 @@ export async function getTemplateContextHandler(args: any, context: ToolContext)
       if (!content || !content.trim()) {
         return {
           success: false,
-          message: translate('tools.getTemplateContext.errors.templateEmpty', lang, { file: templateInfo.file }),
+          message: i18n.t('tools.getTemplateContext.emptyFile', { file: templateInfo.file }),
           data: {
             templateType,
             template,
             loaded: false
           },
           nextSteps: [
-            translate('tools.getTemplateContext.errors.nextSteps.checkContent', lang),
-            translate('tools.getTemplateContext.errors.nextSteps.verifyIntegrity', lang)
+            i18n.t('tools.getTemplateContext.checkContent'),
+            i18n.t('tools.getTemplateContext.verifyIntegrity')
           ]
         };
       }
 
-      const formattedContext = translate('tools.getTemplateContext.messages.fullContext', lang, { title: templateInfo.title, content: content.trim(), template });
+      const formattedContext = i18n.t('tools.getTemplateContext.loadedContext', {
+        title: templateInfo.title,
+        content: content.trim(),
+        template
+      });
 
       return {
         success: true,
-        message: translate('tools.getTemplateContext.successMessage', lang, { template, templateType }),
+        message: i18n.t('tools.getTemplateContext.successMessage', { template, templateType }),
         data: {
           context: formattedContext,
           templateType,
@@ -118,11 +120,11 @@ export async function getTemplateContextHandler(args: any, context: ToolContext)
           loaded: templateInfo.file
         },
         nextSteps: [
-          translate('tools.getTemplateContext.nextSteps.success.useTemplate', lang, { template }),
-          translate('tools.getTemplateContext.nextSteps.success.followStructure', lang),
+          i18n.t('tools.getTemplateContext.useForDocument', { template }),
+          i18n.t('tools.getTemplateContext.followStructure'),
           templateType === 'spec'
-            ? translate('tools.getTemplateContext.nextSteps.success.nextSpec', lang, { template })
-            : translate('tools.getTemplateContext.nextSteps.success.nextSteering', lang, { template })
+            ? i18n.t('tools.getTemplateContext.nextSpec', { template })
+            : i18n.t('tools.getTemplateContext.nextSteering', { template })
         ],
         projectContext: {
           projectPath,
@@ -133,16 +135,16 @@ export async function getTemplateContextHandler(args: any, context: ToolContext)
     } catch (error) {
       return {
         success: false,
-        message: translate('tools.getTemplateContext.errors.fileNotFound', lang, { file: templateInfo.file }),
+        message: i18n.t('tools.getTemplateContext.fileNotFound', { file: templateInfo.file }),
         data: {
           templateType,
           template,
           loaded: false
         },
         nextSteps: [
-          translate('tools.getTemplateContext.errors.nextSteps.checkDirectory', lang),
-          translate('tools.getTemplateContext.errors.nextSteps.verifyExists', lang),
-          translate('tools.getTemplateContext.errors.nextSteps.location', lang, { location: join(templatesPath, templateInfo.file) })
+          i18n.t('tools.getTemplateContext.checkDirectory'),
+          i18n.t('tools.getTemplateContext.verifyFileExists'),
+          i18n.t('tools.getTemplateContext.location', { path: join(templatesPath, templateInfo.file) })
         ]
       };
     }
@@ -150,11 +152,11 @@ export async function getTemplateContextHandler(args: any, context: ToolContext)
   } catch (error: any) {
     return {
       success: false,
-      message: translate('tools.getTemplateContext.errors.genericFail', lang, { message: error.message }),
+      message: i18n.t('tools.getTemplateContext.failureMessage', { errorMessage: error.message }),
       nextSteps: [
-        translate('tools.getTemplateContext.errors.nextSteps.checkDirectory', lang),
-        translate('tools.getTemplateContext.errors.nextSteps.checkPermissions', lang),
-        translate('tools.getTemplateContext.errors.nextSteps.checkFiles', lang)
+        i18n.t('tools.getTemplateContext.checkDirectory'),
+        i18n.t('tools.getTemplateContext.checkPermissions'),
+        i18n.t('tools.getTemplateContext.checkFiles')
       ]
     };
   }

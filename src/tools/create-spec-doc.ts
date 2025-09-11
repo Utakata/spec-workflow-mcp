@@ -3,31 +3,31 @@ import { ToolContext, ToolResponse } from '../types.js';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import { PathUtils } from '../core/path-utils.js';
-import { translate } from '../core/i18n.js';
+import i18n from '../core/i18n.js';
 
 export const createSpecDocTool: Tool = {
   name: 'create-spec-doc',
-  description: translate('tools.createSpecDoc.description'),
+  description: i18n.t('tools.createSpecDoc.description'),
   inputSchema: {
     type: 'object',
     properties: {
       projectPath: {
         type: 'string',
-        description: translate('tools.createSpecDoc.projectPathDescription')
+        description: i18n.t('tools.createSpecDoc.projectPathDescription')
       },
       specName: {
         type: 'string',
         pattern: '^[a-z][a-z0-9-]*$',
-        description: translate('tools.createSpecDoc.specNameDescription')
+        description: i18n.t('tools.createSpecDoc.specNameDescription')
       },
       document: {
         type: 'string',
         enum: ['requirements', 'design', 'tasks'],
-        description: translate('tools.createSpecDoc.documentDescription')
+        description: i18n.t('tools.createSpecDoc.documentDescription')
       },
       content: {
         type: 'string',
-        description: translate('tools.createSpecDoc.contentDescription')
+        description: i18n.t('tools.createSpecDoc.contentDescription')
       }
     },
     required: ['projectPath', 'specName', 'document', 'content']
@@ -36,7 +36,6 @@ export const createSpecDocTool: Tool = {
 
 export async function createSpecDocHandler(args: any, context: ToolContext): Promise<ToolResponse> {
   const { projectPath, specName, document, content } = args;
-  const lang = context.lang || 'en';
 
   try {
     const specDir = PathUtils.getSpecPath(projectPath, specName);
@@ -53,7 +52,7 @@ export async function createSpecDocHandler(args: any, context: ToolContext): Pro
       } catch {
         return {
           success: false,
-          message: translate('tools.createSpecDoc.errors.designBeforeReq', lang)
+          message: i18n.t('tools.createSpecDoc.workflowViolationDesign')
         };
       }
     }
@@ -64,7 +63,7 @@ export async function createSpecDocHandler(args: any, context: ToolContext): Pro
       } catch {
         return {
           success: false,
-          message: translate('tools.createSpecDoc.errors.tasksBeforeDesign', lang)
+          message: i18n.t('tools.createSpecDoc.workflowViolationTasks')
         };
       }
     }
@@ -77,7 +76,10 @@ export async function createSpecDocHandler(args: any, context: ToolContext): Pro
     // Return concise, directive message
     return {
       success: true,
-      message: translate('tools.createSpecDoc.successMessage', lang, { filename, filePath: PathUtils.toUnixPath(filePath) }),
+      message: i18n.t('tools.createSpecDoc.successMessage', {
+        filename,
+        filePath: PathUtils.toUnixPath(filePath)
+      }),
       data: {
         specName,
         document,
@@ -88,7 +90,7 @@ export async function createSpecDocHandler(args: any, context: ToolContext): Pro
   } catch (error: any) {
     return {
       success: false,
-      message: translate('tools.createSpecDoc.errors.failed', lang, { message: error.message })
+      message: i18n.t('tools.createSpecDoc.failureMessage', { errorMessage: error.message })
     };
   }
 }

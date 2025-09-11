@@ -4,17 +4,17 @@ import { PathUtils } from '../core/path-utils.js';
 import { readFile, access } from 'fs/promises';
 import { join } from 'path';
 import { constants } from 'fs';
-import { translate } from '../core/i18n.js';
+import i18n from '../core/i18n.js';
 
 export const getSteeringContextTool: Tool = {
   name: 'get-steering-context',
-  description: translate('tools.getSteeringContext.description'),
+  description: i18n.t('tools.getSteeringContext.description'),
   inputSchema: {
     type: 'object',
     properties: {
       projectPath: { 
         type: 'string',
-        description: translate('tools.getSteeringContext.projectPathDescription')
+        description: i18n.t('tools.getSteeringContext.projectPathDescription')
       }
     },
     required: ['projectPath']
@@ -23,7 +23,6 @@ export const getSteeringContextTool: Tool = {
 
 export async function getSteeringContextHandler(args: any, context: ToolContext): Promise<ToolResponse> {
   const { projectPath } = args;
-  const lang = context.lang || 'en';
 
   try {
     const steeringPath = PathUtils.getSteeringPath(projectPath);
@@ -34,9 +33,9 @@ export async function getSteeringContextHandler(args: any, context: ToolContext)
     } catch {
       return {
         success: true,
-        message: translate('tools.getSteeringContext.messages.notFound', lang),
+        message: i18n.t('tools.getSteeringContext.notFound'),
         data: {
-          context: translate('tools.getSteeringContext.messages.notFoundContext', lang),
+          context: i18n.t('tools.getSteeringContext.notFoundContext'),
           documents: {
             product: false,
             tech: false,
@@ -44,17 +43,17 @@ export async function getSteeringContextHandler(args: any, context: ToolContext)
           }
         },
         nextSteps: [
-          translate('tools.getSteeringContext.nextSteps.notFound.useBestPractices', lang),
-          translate('tools.getSteeringContext.nextSteps.notFound.askToCreate', lang),
-          translate('tools.getSteeringContext.nextSteps.notFound.newProjectNote', lang)
+          i18n.t('tools.getSteeringContext.useBestPractices'),
+          i18n.t('tools.getSteeringContext.askToCreate'),
+          i18n.t('tools.getSteeringContext.notNeeded')
         ]
       };
     }
 
     const steeringFiles = [
-      { name: 'product.md', title: translate('tools.getSteeringContext.docTitles.product', lang) },
-      { name: 'tech.md', title: translate('tools.getSteeringContext.docTitles.tech', lang) },
-      { name: 'structure.md', title: translate('tools.getSteeringContext.docTitles.structure', lang) }
+      { name: 'product.md', title: i18n.t('tools.getSteeringContext.productContext') },
+      { name: 'tech.md', title: i18n.t('tools.getSteeringContext.technologyContext') },
+      { name: 'structure.md', title: i18n.t('tools.getSteeringContext.structureContext') }
     ];
 
     const sections: string[] = [];
@@ -84,34 +83,36 @@ export async function getSteeringContextHandler(args: any, context: ToolContext)
     if (!hasContent) {
       return {
         success: true,
-        message: translate('tools.getSteeringContext.messages.emptyDocs', lang),
+        message: i18n.t('tools.getSteeringContext.emptyDocs'),
         data: {
-          context: translate('tools.getSteeringContext.messages.emptyContext', lang),
+          context: i18n.t('tools.getSteeringContext.emptyDocsContext'),
           documents: documentStatus
         },
         nextSteps: [
-          translate('tools.getSteeringContext.nextSteps.empty.useBestPractices', lang),
-          translate('tools.getSteeringContext.nextSteps.empty.askToPopulate', lang),
-          translate('tools.getSteeringContext.nextSteps.empty.newProjectNote', lang)
+          i18n.t('tools.getSteeringContext.useBestPractices'),
+          i18n.t('tools.getSteeringContext.askToPopulate'),
+          i18n.t('tools.getSteeringContext.emptyIsFine')
         ]
       };
     }
 
     // Format the complete steering context
-    const formattedContext = translate('tools.getSteeringContext.messages.fullContext', lang, { sections: sections.join('\n\n---\n\n') });
+    const formattedContext = i18n.t('tools.getSteeringContext.loadedContext', {
+      sections: sections.join('\n\n---\n\n')
+    });
 
     return {
       success: true,
-      message: translate('tools.getSteeringContext.successMessage', lang),
+      message: i18n.t('tools.getSteeringContext.successMessage'),
       data: {
         context: formattedContext,
         documents: documentStatus,
         sections: sections.length
       },
       nextSteps: [
-        translate('tools.getSteeringContext.nextSteps.success.doNotCallAgain', lang),
-        translate('tools.getSteeringContext.nextSteps.success.reference', lang),
-        translate('tools.getSteeringContext.nextSteps.success.align', lang)
+        i18n.t('tools.getSteeringContext.dontCallAgain'),
+        i18n.t('tools.getSteeringContext.referenceStandards'),
+        i18n.t('tools.getSteeringContext.alignDecisions')
       ],
       projectContext: {
         projectPath,
@@ -123,11 +124,11 @@ export async function getSteeringContextHandler(args: any, context: ToolContext)
   } catch (error: any) {
     return {
       success: false,
-      message: translate('tools.getSteeringContext.errors.genericFail', lang, { message: error.message }),
+      message: i18n.t('tools.getSteeringContext.failureMessage', { errorMessage: error.message }),
       nextSteps: [
-        translate('tools.getSteeringContext.errors.nextSteps.checkPath', lang),
-        translate('tools.getSteeringContext.errors.nextSteps.checkPermissions', lang),
-        translate('tools.getSteeringContext.errors.nextSteps.runSetup', lang)
+        i18n.t('tools.getSteeringContext.checkPath'),
+        i18n.t('tools.getSteeringContext.checkPermissions'),
+        i18n.t('tools.getSteeringContext.runSetup')
       ]
     };
   }

@@ -2,17 +2,17 @@ import { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { ToolContext, ToolResponse } from '../types.js';
 import { PathUtils } from '../core/path-utils.js';
 import { SpecParser } from '../core/parser.js';
-import { translate } from '../core/i18n.js';
+import i18n from '../core/i18n.js';
 
 export const specListTool: Tool = {
   name: 'spec-list',
-  description: translate('tools.specList.description'),
+  description: i18n.t('tools.specList.description'),
   inputSchema: {
     type: 'object',
     properties: {
       projectPath: { 
         type: 'string',
-        description: translate('tools.specList.projectPathDescription')
+        description: i18n.t('tools.specList.projectPathDescription')
       }
     },
     required: ['projectPath']
@@ -21,23 +21,22 @@ export const specListTool: Tool = {
 
 export async function specListHandler(args: any, context: ToolContext): Promise<ToolResponse> {
   const { projectPath } = args;
-  const lang = context.lang || 'en';
 
   try {
     const parser = new SpecParser(projectPath);
     const specs = await parser.getAllSpecs();
 
     if (specs.length === 0) {
-      return {
+      const response = {
         success: true,
-        message: translate('tools.specList.messages.noSpecs', lang),
+        message: i18n.t('tools.specList.noSpecsFound'),
         data: {
           specs: [],
           total: 0
         },
         nextSteps: [
-          translate('tools.specList.nextSteps.noSpecs.create', lang),
-          translate('tools.specList.nextSteps.noSpecs.example', lang)
+          i18n.t('tools.specList.createNew'),
+          i18n.t('tools.specList.example')
         ],
         projectContext: {
           projectPath,
@@ -45,6 +44,8 @@ export async function specListHandler(args: any, context: ToolContext): Promise<
           dashboardUrl: context.dashboardUrl
         }
       };
+
+      return response;
     }
 
     // Format specs for display
@@ -54,21 +55,21 @@ export async function specListHandler(args: any, context: ToolContext): Promise<
         .filter(([_, phase]) => phase.exists && phase.approved)
         .map(([name]) => name);
       
-      let status = 'not-started';
+      let status = i18n.t('tools.specList.statusNotStarted');
       if (phaseCount === 0) {
-        status = 'not-started';
+        status = i18n.t('tools.specList.statusNotStarted');
       } else if (phaseCount < 3) {
-        status = 'in-progress';
+        status = i18n.t('tools.specList.statusInProgress');
       } else if (completedPhases.length === 3) {
-        status = 'ready-for-implementation';
+        status = i18n.t('tools.specList.statusReadyForImplementation');
       } else if (spec.taskProgress && spec.taskProgress.completed > 0) {
-        status = 'implementing';
+        status = i18n.t('tools.specList.statusImplementing');
       } else {
-        status = 'ready-for-implementation';
+        status = i18n.t('tools.specList.statusReadyForImplementation');
       }
 
       if (spec.taskProgress && spec.taskProgress.completed === spec.taskProgress.total && spec.taskProgress.total > 0) {
-        status = 'completed';
+        status = i18n.t('tools.specList.statusCompleted');
       }
 
       return {
@@ -93,9 +94,9 @@ export async function specListHandler(args: any, context: ToolContext): Promise<
       return acc;
     }, {} as Record<string, number>);
 
-    return {
+    const response = {
       success: true,
-      message: translate('tools.specList.successMessage', lang, { count: specs.length }),
+      message: i18n.t(specs.length === 1 ? 'tools.specList.specsFound' : 'tools.specList.specsFoundPlural', { count: specs.length }),
       data: {
         specs: formattedSpecs,
         total: specs.length,
@@ -106,9 +107,9 @@ export async function specListHandler(args: any, context: ToolContext): Promise<
         }
       },
       nextSteps: [
-        translate('tools.specList.nextSteps.success.viewStatus', lang),
-        translate('tools.specList.nextSteps.success.continue', lang),
-        translate('tools.specList.nextSteps.success.create', lang)
+        i18n.t('tools.specList.viewDetailedStatus'),
+        i18n.t('tools.specList.continueImplementation'),
+        i18n.t('tools.specList.createNewSpecs')
       ],
       projectContext: {
         projectPath,
@@ -117,15 +118,19 @@ export async function specListHandler(args: any, context: ToolContext): Promise<
       }
     };
 
+    return response;
+
   } catch (error: any) {
-    return {
+    const errorResponse = {
       success: false,
-      message: translate('tools.specList.errors.failed', lang, { message: error.message }),
+      message: i18n.t('tools.specList.failureMessage', { errorMessage: error.message }),
       nextSteps: [
-        translate('tools.specList.errors.nextSteps.checkPath', lang),
-        translate('tools.specList.errors.nextSteps.verifyDir', lang),
-        translate('tools.specList.errors.nextSteps.create', lang)
+        i18n.t('tools.specList.checkPath'),
+        i18n.t('tools.specList.checkSpecWorkflowDir'),
+        i18n.t('tools.specList.createIfNoneExist')
       ]
     };
+
+    return errorResponse;
   }
 }

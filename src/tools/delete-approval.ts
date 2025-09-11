@@ -3,21 +3,21 @@ import { ToolContext, ToolResponse } from '../types.js';
 import { ApprovalStorage } from '../dashboard/approval-storage.js';
 import { validateProjectPath } from '../core/path-utils.js';
 import { join } from 'path';
-import { translate } from '../core/i18n.js';
+import i18n from '../core/i18n.js';
 
 export const deleteApprovalTool: Tool = {
   name: 'delete-approval',
-  description: translate('tools.deleteApproval.description'),
+  description: i18n.t('tools.deleteApproval.description'),
   inputSchema: {
     type: 'object',
     properties: {
       projectPath: {
         type: 'string',
-        description: translate('tools.deleteApproval.projectPathDescription')
+        description: i18n.t('tools.deleteApproval.projectPathDescription')
       },
       approvalId: {
         type: 'string',
-        description: translate('tools.deleteApproval.approvalIdDescription')
+        description: i18n.t('tools.deleteApproval.approvalIdDescription')
       }
     },
     required: ['approvalId']
@@ -28,14 +28,13 @@ export async function deleteApprovalHandler(
   args: { projectPath?: string; approvalId: string },
   context: ToolContext
 ): Promise<ToolResponse> {
-  const lang = context.lang || 'en';
   try {
     // Use provided projectPath or fall back to context
     const projectPath = args.projectPath || context.projectPath;
     if (!projectPath) {
       return {
         success: false,
-        message: translate('tools.deleteApproval.errors.projectPathRequired', lang)
+        message: i18n.t('tools.deleteApproval.projectPathRequired')
       };
     }
     
@@ -50,10 +49,10 @@ export async function deleteApprovalHandler(
     if (!approval) {
       return {
         success: false,
-        message: translate('tools.deleteApproval.errors.notFound', lang, { approvalId: args.approvalId }),
+        message: i18n.t('tools.deleteApproval.notFound', { approvalId: args.approvalId }),
         nextSteps: [
-          translate('tools.deleteApproval.errors.nextSteps.verifyId', lang),
-          translate('tools.deleteApproval.errors.nextSteps.checkStatus', lang)
+          i18n.t('tools.deleteApproval.verifyId'),
+          i18n.t('tools.deleteApproval.checkStatus')
         ]
       };
     }
@@ -62,7 +61,7 @@ export async function deleteApprovalHandler(
     if (approval.status !== 'approved') {
       return {
         success: false,
-        message: translate('tools.deleteApproval.errors.notApproved', lang, { status: approval.status }),
+        message: i18n.t('tools.deleteApproval.blocked', { status: approval.status }),
         data: {
           approvalId: args.approvalId,
           currentStatus: approval.status,
@@ -71,9 +70,9 @@ export async function deleteApprovalHandler(
           canProceed: false
         },
         nextSteps: [
-          translate('tools.deleteApproval.errors.nextSteps.stop', lang),
-          translate('tools.deleteApproval.errors.nextSteps.wait', lang),
-          translate('tools.deleteApproval.errors.nextSteps.poll', lang)
+          i18n.t('tools.deleteApproval.stop'),
+          i18n.t('tools.deleteApproval.wait'),
+          i18n.t('tools.deleteApproval.poll')
         ]
       };
     }
@@ -85,7 +84,7 @@ export async function deleteApprovalHandler(
     if (deleted) {
       return {
         success: true,
-        message: translate('tools.deleteApproval.successMessage', lang, { approvalId: args.approvalId }),
+        message: i18n.t('tools.deleteApproval.successMessage', { approvalId: args.approvalId }),
         data: {
           deletedApprovalId: args.approvalId,
           title: approval.title,
@@ -93,8 +92,8 @@ export async function deleteApprovalHandler(
           categoryName: approval.categoryName
         },
         nextSteps: [
-          translate('tools.deleteApproval.nextSteps.cleanupComplete', lang),
-          translate('tools.deleteApproval.nextSteps.continue', lang)
+          i18n.t('tools.deleteApproval.cleanupComplete'),
+          i18n.t('tools.deleteApproval.continue')
         ],
         projectContext: {
           projectPath: validatedProjectPath,
@@ -105,11 +104,11 @@ export async function deleteApprovalHandler(
     } else {
       return {
         success: false,
-        message: translate('tools.deleteApproval.errors.deleteFailed', lang, { approvalId: args.approvalId }),
+        message: i18n.t('tools.deleteApproval.failureMessage', { approvalId: args.approvalId }),
         nextSteps: [
-          translate('tools.deleteApproval.errors.nextSteps.checkPermissions', lang),
-          translate('tools.deleteApproval.errors.nextSteps.verifyExists', lang),
-          translate('tools.deleteApproval.errors.nextSteps.retry', lang)
+          i18n.t('tools.deleteApproval.checkPermissions'),
+          i18n.t('tools.deleteApproval.verifyExists'),
+          i18n.t('tools.deleteApproval.retry')
         ]
       };
     }
@@ -117,11 +116,11 @@ export async function deleteApprovalHandler(
   } catch (error: any) {
     return {
       success: false,
-      message: translate('tools.deleteApproval.errors.genericFail', lang, { message: error.message }),
+      message: i18n.t('tools.deleteApproval.genericFail', { errorMessage: error.message }),
       nextSteps: [
-        translate('tools.deleteApproval.errors.nextSteps.checkPath', lang),
-        translate('tools.deleteApproval.errors.nextSteps.checkPermissions', lang),
-        translate('tools.deleteApproval.errors.nextSteps.checkSystem', lang)
+        i18n.t('tools.deleteApproval.checkPath'),
+        i18n.t('tools.deleteApproval.verifyPermissions'),
+        i18n.t('tools.deleteApproval.checkSystem')
       ]
     };
   }

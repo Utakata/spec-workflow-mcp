@@ -14,6 +14,7 @@ import { getApprovalStatusTool, getApprovalStatusHandler } from './get-approval-
 import { deleteApprovalTool, deleteApprovalHandler } from './delete-approval.js';
 import { refreshTasksTool, refreshTasksHandler } from './refresh-tasks.js';
 import { ToolContext, ToolResponse, MCPToolResponse, toMCPResponse } from '../types.js';
+import i18n from '../core/i18n.js';
 
 export function registerTools(): Tool[] {
   return [
@@ -83,7 +84,7 @@ export async function handleToolCall(name: string, args: any, context: ToolConte
         response = await refreshTasksHandler(args, context);
         break;
       default:
-        throw new Error(`Unknown tool: ${name}`);
+        throw new Error(i18n.t('tools.index.unknownTool', { name }));
     }
 
     // Check if the response indicates an error
@@ -92,7 +93,7 @@ export async function handleToolCall(name: string, args: any, context: ToolConte
   } catch (error: any) {
     response = {
       success: false,
-      message: `Tool execution failed: ${error.message}`
+      message: i18n.t('tools.index.executionFailed', { errorMessage: error.message })
     };
     isError = true;
   }

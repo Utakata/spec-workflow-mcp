@@ -1,8 +1,4 @@
 import * as vscode from 'vscode';
-import * as nls from 'vscode-nls';
-
-const localize = nls.loadMessageBundle();
-
 import { SidebarProvider } from './extension/providers/SidebarProvider';
 import { SpecWorkflowService } from './extension/services/SpecWorkflowService';
 import { FileWatcher } from './extension/services/FileWatcher';
@@ -10,12 +6,12 @@ import { ApprovalEditorService } from './extension/services/ApprovalEditorServic
 import { ApprovalCommandService } from './extension/services/ApprovalCommandService';
 
 export function activate(context: vscode.ExtensionContext) {
-	console.log(localize('extension.active', 'Spec Workflow MCP extension is now active!'));
+	console.log('Spec Workflow MCP extension is now active!');
 
 	// Create output channel for debugging
 	const outputChannel = vscode.window.createOutputChannel('Spec Workflow');
 	context.subscriptions.push(outputChannel);
-	outputChannel.appendLine(localize('logging.enabled', 'Spec Workflow MCP extension activated - logging enabled'));
+	outputChannel.appendLine('Spec Workflow MCP extension activated - logging enabled');
 
 	// Initialize services
 	const specWorkflowService = new SpecWorkflowService(outputChannel);
@@ -65,18 +61,18 @@ export function activate(context: vscode.ExtensionContext) {
 			try {
 				const specs = await specWorkflowService.getAllSpecs();
 				if (specs.length === 0) {
-					vscode.window.showInformationMessage(localize('openSpec.noSpecs', 'No specifications found'));
+					vscode.window.showInformationMessage('No specifications found');
 					return;
 				}
 
 				const items = specs.map(spec => ({
 					label: spec.displayName,
 					description: spec.name,
-					detail: localize('openSpec.lastModified', 'Last modified: {0}', new Date(spec.lastModified).toLocaleDateString())
+					detail: `Last modified: ${new Date(spec.lastModified).toLocaleDateString()}`
 				}));
 
 				const selected = await vscode.window.showQuickPick(items, {
-					placeHolder: localize('openSpec.placeholder', 'Select a specification to open')
+					placeHolder: 'Select a specification to open'
 				});
 
 				if (selected) {
@@ -88,7 +84,7 @@ export function activate(context: vscode.ExtensionContext) {
 					vscode.commands.executeCommand('vscode.openFolder', specPath, true);
 				}
 			} catch (error) {
-				vscode.window.showErrorMessage(localize('openSpec.loadFailed', 'Failed to load specifications: {0}', (error as Error).message));
+				vscode.window.showErrorMessage('Failed to load specifications: ' + (error as Error).message);
 			}
 		})
 	);
@@ -133,12 +129,11 @@ export function activate(context: vscode.ExtensionContext) {
 	// Show welcome message for first-time users
 	const hasShownWelcome = context.globalState.get<boolean>('hasShownWelcome', false);
 	if (!hasShownWelcome) {
-		const openSidebar = localize('welcome.openSidebar', 'Open Sidebar');
 		vscode.window.showInformationMessage(
-			localize('welcome.message', 'Spec Workflow MCP is now active! Open the sidebar to get started.'),
-			openSidebar
+			'Spec Workflow MCP is now active! Open the sidebar to get started.',
+			'Open Sidebar'
 		).then(selection => {
-			if (selection === openSidebar) {
+			if (selection === 'Open Sidebar') {
 				vscode.commands.executeCommand('workbench.view.extension.spec-workflow');
 			}
 		});
@@ -147,5 +142,5 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {
-	console.log(localize('extension.deactivated', 'Spec Workflow MCP extension deactivated'));
+	console.log('Spec Workflow MCP extension deactivated');
 }

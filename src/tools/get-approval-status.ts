@@ -3,21 +3,21 @@ import { ToolContext, ToolResponse } from '../types.js';
 import { ApprovalStorage } from '../dashboard/approval-storage.js';
 import { join } from 'path';
 import { validateProjectPath } from '../core/path-utils.js';
-import { translate } from '../core/i18n.js';
+import i18n from '../core/i18n.js';
 
 export const getApprovalStatusTool: Tool = {
   name: 'get-approval-status',
-  description: translate('tools.getApprovalStatus.description'),
+  description: i18n.t('tools.getApprovalStatus.description'),
   inputSchema: {
     type: 'object',
     properties: {
       projectPath: {
         type: 'string',
-        description: translate('tools.getApprovalStatus.projectPathDescription')
+        description: i18n.t('tools.getApprovalStatus.projectPathDescription')
       },
       approvalId: {
         type: 'string',
-        description: translate('tools.getApprovalStatus.approvalIdDescription')
+        description: i18n.t('tools.getApprovalStatus.approvalIdDescription')
       }
     },
     required: ['approvalId']
@@ -28,14 +28,13 @@ export async function getApprovalStatusHandler(
   args: { projectPath?: string; approvalId: string },
   context: ToolContext
 ): Promise<ToolResponse> {
-  const lang = context.lang || 'en';
   try {
     // Use provided projectPath or fall back to context
     const projectPath = args.projectPath || context.projectPath;
     if (!projectPath) {
       return {
         success: false,
-        message: translate('tools.getApprovalStatus.errors.projectPathRequired', lang)
+        message: i18n.t('tools.getApprovalStatus.projectPathRequired')
       };
     }
     
@@ -51,7 +50,7 @@ export async function getApprovalStatusHandler(
       await approvalStorage.stop();
       return {
         success: false,
-        message: translate('tools.getApprovalStatus.errors.notFound', lang, { approvalId: args.approvalId })
+        message: i18n.t('tools.getApprovalStatus.notFound', { approvalId: args.approvalId })
       };
     }
 
@@ -63,48 +62,46 @@ export async function getApprovalStatusHandler(
     const nextSteps: string[] = [];
 
     if (approval.status === 'pending') {
-      nextSteps.push(translate('tools.getApprovalStatus.nextSteps.pending.blocked', lang));
-      nextSteps.push(translate('tools.getApprovalStatus.nextSteps.pending.noVerbal', lang));
-      nextSteps.push(translate('tools.getApprovalStatus.nextSteps.pending.useUI', lang));
-      nextSteps.push(translate('tools.getApprovalStatus.nextSteps.pending.poll', lang));
+      nextSteps.push(i18n.t('tools.getApprovalStatus.blocked'));
+      nextSteps.push(i18n.t('tools.getApprovalStatus.verbalApprovalNotAccepted'));
+      nextSteps.push(i18n.t('tools.getApprovalStatus.useDashboardOrVSCode'));
+      nextSteps.push(i18n.t('tools.getApprovalStatus.continuePolling'));
     } else if (approval.status === 'approved') {
-      nextSteps.push(translate('tools.getApprovalStatus.nextSteps.approved.canProceed', lang));
-      nextSteps.push(translate('tools.getApprovalStatus.nextSteps.approved.delete', lang));
+      nextSteps.push(i18n.t('tools.getApprovalStatus.approvedCanProceed'));
+      nextSteps.push(i18n.t('tools.getApprovalStatus.runDeleteApproval'));
       if (approval.response) {
-        nextSteps.push(translate('tools.getApprovalStatus.nextSteps.approved.response', lang, { response: approval.response }));
+        nextSteps.push(i18n.t('tools.getApprovalStatus.response', { response: approval.response }));
       }
     } else if (approval.status === 'rejected') {
-      nextSteps.push(translate('tools.getApprovalStatus.nextSteps.rejected.blocked', lang));
-      nextSteps.push(translate('tools.getApprovalStatus.nextSteps.rejected.doNotProceed', lang));
-      nextSteps.push(translate('tools.getApprovalStatus.nextSteps.rejected.revise', lang));
+      nextSteps.push(i18n.t('tools.getApprovalStatus.blockedRejected'));
+      nextSteps.push(i18n.t('tools.getApprovalStatus.blocked')); // "Do not proceed"
+      nextSteps.push(i18n.t('tools.getApprovalStatus.reviewAndRevise'));
       if (approval.response) {
-        nextSteps.push(translate('tools.getApprovalStatus.nextSteps.rejected.reason', lang, { reason: approval.response }));
+        nextSteps.push(i18n.t('tools.getApprovalStatus.reason', { response: approval.response }));
       }
       if (approval.annotations) {
-        nextSteps.push(translate('tools.getApprovalStatus.nextSteps.rejected.notes', lang, { notes: approval.annotations }));
+        nextSteps.push(i18n.t('tools.getApprovalStatus.notes', { annotations: approval.annotations }));
       }
     } else if (approval.status === 'needs-revision') {
-      nextSteps.push(translate('tools.getApprovalStatus.nextSteps.needsRevision.blocked', lang));
-      nextSteps.push(translate('tools.getApprovalStatus.nextSteps.needsRevision.update', lang));
-      nextSteps.push(translate('tools.getApprovalStatus.nextSteps.needsRevision.newRequest', lang));
+      nextSteps.push(i18n.t('tools.getApprovalStatus.blocked'));
+      nextSteps.push(i18n.t('tools.getApprovalStatus.updateDocument'));
+      nextSteps.push(i18n.t('tools.getApprovalStatus.createNewRequest'));
       if (approval.response) {
-        nextSteps.push(translate('tools.getApprovalStatus.nextSteps.needsRevision.feedback', lang, { feedback: approval.response }));
+        nextSteps.push(i18n.t('tools.getApprovalStatus.feedback', { response: approval.response }));
       }
       if (approval.annotations) {
-        nextSteps.push(translate('tools.getApprovalStatus.nextSteps.needsRevision.notes', lang, { notes: approval.annotations }));
+        nextSteps.push(i18n.t('tools.getApprovalStatus.notes', { annotations: approval.annotations }));
       }
       if (approval.comments && approval.comments.length > 0) {
-        nextSteps.push(translate('tools.getApprovalStatus.nextSteps.needsRevision.comments', lang, { count: approval.comments.length }));
+        nextSteps.push(i18n.t('tools.getApprovalStatus.comments', { count: approval.comments.length }));
       }
     }
 
-    const message = approval.status === 'pending'
-      ? translate('tools.getApprovalStatus.messages.pending', lang, { status: approval.status })
-      : translate('tools.getApprovalStatus.messages.other', lang, { status: approval.status });
-
     return {
       success: true,
-      message,
+      message: approval.status === 'pending'
+        ? i18n.t('tools.getApprovalStatus.messagePending', { status: approval.status })
+        : i18n.t('tools.getApprovalStatus.messageDefault', { status: approval.status }),
       data: {
         approvalId: args.approvalId,
         title: approval.title,
@@ -131,7 +128,7 @@ export async function getApprovalStatusHandler(
   } catch (error: any) {
     return {
       success: false,
-      message: translate('tools.getApprovalStatus.errors.genericFail', lang, { message: error.message })
+      message: i18n.t('tools.getApprovalStatus.failureMessage', { errorMessage: error.message })
     };
   }
 }

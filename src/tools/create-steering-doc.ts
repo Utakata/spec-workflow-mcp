@@ -3,26 +3,26 @@ import { ToolContext, ToolResponse } from '../types.js';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import { PathUtils } from '../core/path-utils.js';
-import { translate } from '../core/i18n.js';
+import i18n from '../core/i18n.js';
 
 export const createSteeringDocTool: Tool = {
   name: 'create-steering-doc',
-  description: translate('tools.createSteeringDoc.description'),
+  description: i18n.t('tools.createSteeringDoc.description'),
   inputSchema: {
     type: 'object',
     properties: {
       projectPath: {
         type: 'string',
-        description: translate('tools.createSteeringDoc.projectPathDescription')
+        description: i18n.t('tools.createSteeringDoc.projectPathDescription')
       },
       document: {
         type: 'string',
         enum: ['product', 'tech', 'structure'],
-        description: translate('tools.createSteeringDoc.documentDescription')
+        description: i18n.t('tools.createSteeringDoc.documentDescription')
       },
       content: {
         type: 'string',
-        description: translate('tools.createSteeringDoc.contentDescription')
+        description: i18n.t('tools.createSteeringDoc.contentDescription')
       }
     },
     required: ['projectPath', 'document', 'content']
@@ -31,7 +31,6 @@ export const createSteeringDocTool: Tool = {
 
 export async function createSteeringDocHandler(args: any, context: ToolContext): Promise<ToolResponse> {
   const { projectPath, document, content } = args;
-  const lang = context.lang || 'en';
 
   try {
     // Ensure steering directory exists
@@ -45,18 +44,14 @@ export async function createSteeringDocHandler(args: any, context: ToolContext):
     await fs.writeFile(filePath, content, 'utf-8');
 
     const documentNames: { [key: string]: string } = {
-      product: translate('tools.createSteeringDoc.docNames.product', lang),
-      tech: translate('tools.createSteeringDoc.docNames.tech', lang),
-      structure: translate('tools.createSteeringDoc.docNames.structure', lang)
+      product: i18n.t('tools.createSteeringDoc.productSteering'),
+      tech: i18n.t('tools.createSteeringDoc.technicalSteering'),
+      structure: i18n.t('tools.createSteeringDoc.structureSteering')
     };
-
-    const nextStep = document === 'product' ? translate('tools.createSteeringDoc.nextSteps.product', lang) :
-                     document === 'tech' ? translate('tools.createSteeringDoc.nextSteps.tech', lang) :
-                     translate('tools.createSteeringDoc.nextSteps.structure', lang);
 
     return {
       success: true,
-      message: translate('tools.createSteeringDoc.successMessage', lang, { docName: documentNames[document] }),
+      message: i18n.t('tools.createSteeringDoc.successMessage', { documentName: documentNames[document] }),
       data: {
         document,
         filename,
@@ -65,9 +60,13 @@ export async function createSteeringDocHandler(args: any, context: ToolContext):
         dashboardUrl: context.dashboardUrl
       },
       nextSteps: [
-        translate('tools.createSteeringDoc.nextSteps.saved', lang, { filename }),
-        nextStep,
-        context.dashboardUrl ? translate('tools.createSteeringDoc.nextSteps.dashboard', lang, { dashboardUrl: context.dashboardUrl }) : translate('tools.createSteeringDoc.nextSteps.dashboardUnavailable', lang)
+        i18n.t('tools.createSteeringDoc.fileSaved', { filename }),
+        document === 'product' ? i18n.t('tools.createSteeringDoc.nextTech') :
+        document === 'tech' ? i18n.t('tools.createSteeringDoc.nextStructure') :
+        i18n.t('tools.createSteeringDoc.steeringComplete'),
+        context.dashboardUrl
+          ? i18n.t('tools.createSteeringDoc.dashboardAvailable', { dashboardUrl: context.dashboardUrl })
+          : i18n.t('tools.createSteeringDoc.dashboardUnavailable')
       ],
       projectContext: {
         projectPath,
@@ -79,11 +78,11 @@ export async function createSteeringDocHandler(args: any, context: ToolContext):
   } catch (error: any) {
     return {
       success: false,
-      message: translate('tools.createSteeringDoc.errors.failed', lang, { document, message: error.message }),
+      message: i18n.t('tools.createSteeringDoc.failureMessage', { document, errorMessage: error.message }),
       nextSteps: [
-        translate('tools.createSteeringDoc.errors.nextSteps.checkPath', lang),
-        translate('tools.createSteeringDoc.errors.nextSteps.verifyContent', lang),
-        translate('tools.createSteeringDoc.errors.nextSteps.retry', lang)
+        i18n.t('tools.createSteeringDoc.checkPath'),
+        i18n.t('tools.createSteeringDoc.verifyContent'),
+        i18n.t('tools.createSteeringDoc.retry')
       ]
     };
   }

@@ -3,39 +3,39 @@ import { ToolContext, ToolResponse } from '../types.js';
 import { ApprovalStorage } from '../dashboard/approval-storage.js';
 import { join } from 'path';
 import { validateProjectPath } from '../core/path-utils.js';
-import { translate } from '../core/i18n.js';
+import i18n from '../core/i18n.js';
 
 export const requestApprovalTool: Tool = {
   name: 'request-approval',
-  description: translate('tools.requestApproval.description'),
+  description: i18n.t('tools.requestApproval.description'),
   inputSchema: {
     type: 'object',
     properties: {
       projectPath: {
         type: 'string',
-        description: translate('tools.requestApproval.projectPathDescription')
+        description: i18n.t('tools.requestApproval.projectPathDescription')
       },
       title: {
         type: 'string',
-        description: translate('tools.requestApproval.titleDescription')
+        description: i18n.t('tools.requestApproval.titleDescription')
       },
       filePath: {
         type: 'string', 
-        description: translate('tools.requestApproval.filePathDescription')
+        description: i18n.t('tools.requestApproval.filePathDescription')
       },
       type: {
         type: 'string',
         enum: ['document', 'action'],
-        description: translate('tools.requestApproval.typeDescription')
+        description: i18n.t('tools.requestApproval.typeDescription')
       },
       category: {
         type: 'string',
         enum: ['spec', 'steering'],
-        description: translate('tools.requestApproval.categoryDescription')
+        description: i18n.t('tools.requestApproval.categoryDescription')
       },
       categoryName: {
         type: 'string',
-        description: translate('tools.requestApproval.categoryNameDescription')
+        description: i18n.t('tools.requestApproval.categoryNameDescription')
       }
     },
     required: ['projectPath', 'title', 'filePath', 'type', 'category', 'categoryName']
@@ -46,7 +46,6 @@ export async function requestApprovalHandler(
   args: { projectPath: string; title: string; filePath: string; type: 'document' | 'action'; category: 'spec' | 'steering'; categoryName: string },
   context: ToolContext
 ): Promise<ToolResponse> {
-  const lang = context.lang || 'en';
   try {
     // Validate and resolve project path
     const validatedProjectPath = await validateProjectPath(args.projectPath);
@@ -64,13 +63,11 @@ export async function requestApprovalHandler(
 
     await approvalStorage.stop();
 
-    const dashboardMessage = context.dashboardUrl
-      ? translate('tools.requestApproval.nextSteps.useDashboard', lang, { dashboardUrl: context.dashboardUrl })
-      : translate('tools.requestApproval.nextSteps.useVscode', lang);
-
     return {
       success: true,
-      message: translate('tools.requestApproval.successMessage', lang, { dashboardUrl: context.dashboardUrl || translate('tools.requestApproval.dashboardUnavailable', lang) }),
+      message: i18n.t('tools.requestApproval.successMessage', {
+        dashboardUrl: context.dashboardUrl || i18n.t('tools.requestApproval.dashboardNotAvailable')
+      }),
       data: {
         approvalId,
         title: args.title,
@@ -80,11 +77,13 @@ export async function requestApprovalHandler(
         dashboardUrl: context.dashboardUrl
       },
       nextSteps: [
-        translate('tools.requestApproval.nextSteps.blocking', lang),
-        translate('tools.requestApproval.nextSteps.noVerbal', lang),
-        translate('tools.requestApproval.nextSteps.noVerbalConfirm', lang),
-        dashboardMessage,
-        translate('tools.requestApproval.nextSteps.poll', lang, { approvalId })
+        i18n.t('tools.requestApproval.blocking'),
+        i18n.t('tools.requestApproval.verbalNotAccepted'),
+        i18n.t('tools.requestApproval.noVerbalConfirmation'),
+        context.dashboardUrl
+          ? i18n.t('tools.requestApproval.useDashboard', { dashboardUrl: context.dashboardUrl })
+          : i18n.t('tools.requestApproval.useExtension'),
+        i18n.t('tools.requestApproval.pollStatus', { approvalId })
       ],
       projectContext: {
         projectPath: validatedProjectPath,
@@ -96,7 +95,7 @@ export async function requestApprovalHandler(
   } catch (error: any) {
     return {
       success: false,
-      message: translate('tools.requestApproval.errors.failed', lang, { message: error.message })
+      message: i18n.t('tools.requestApproval.failureMessage', { errorMessage: error.message })
     };
   }
 }

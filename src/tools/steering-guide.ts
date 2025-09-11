@@ -1,10 +1,10 @@
 import { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { ToolContext, ToolResponse } from '../types.js';
-import { translate } from '../core/i18n.js';
+import i18n from '../core/i18n.js';
 
 export const steeringGuideTool: Tool = {
   name: 'steering-guide',
-  description: translate('tools.steeringGuide.description'),
+  description: i18n.t('tools.steeringGuide.description'),
   inputSchema: {
     type: 'object',
     properties: {},
@@ -13,24 +13,21 @@ export const steeringGuideTool: Tool = {
 };
 
 export async function steeringGuideHandler(args: any, context: ToolContext): Promise<ToolResponse> {
-  const lang = context.lang || 'en';
-  const dashboardMessage = context.dashboardUrl
-    ? translate('tools.steeringGuide.dashboardMessage', lang, { dashboardUrl: context.dashboardUrl })
-    : translate('tools.steeringGuide.dashboardUnavailable', lang);
-
   return {
     success: true,
-    message: translate('tools.steeringGuide.successMessage', lang),
+    message: i18n.t('tools.steeringGuide.successMessage'),
     data: {
-      guide: translate('tools.steeringGuide.guide', lang),
+      guide: i18n.t('tools.steeringGuide.guide'),
       dashboardUrl: context.dashboardUrl
     },
     nextSteps: [
-      translate('tools.steeringGuide.nextSteps.proceedIfRequested', lang),
-      translate('tools.steeringGuide.nextSteps.createProduct', lang),
-      translate('tools.steeringGuide.nextSteps.createTechAndStructure', lang),
-      translate('tools.steeringGuide.nextSteps.reference', lang),
-      dashboardMessage
+      i18n.t('tools.steeringGuide.onlyIfRequested'),
+      i18n.t('tools.steeringGuide.createProductFirst'),
+      i18n.t('tools.steeringGuide.thenCreateTechAndStructure'),
+      i18n.t('tools.steeringGuide.referenceInFuture'),
+      context.dashboardUrl
+        ? i18n.t('tools.steeringGuide.dashboardAvailable', { dashboardUrl: context.dashboardUrl })
+        : i18n.t('tools.steeringGuide.dashboardUnavailable')
     ]
   };
 }

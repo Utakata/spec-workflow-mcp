@@ -29,7 +29,7 @@ export function translate(key: string, lang: string = 'en', options?: { [key: st
 
   if (options) {
     Object.keys(options).forEach(optionKey => {
-      translation = translation.replace(`{{${optionKey}}}`, String(options[optionKey]));
+      translation = translation.replace(new RegExp(`{{${optionKey}}}`, 'g'), String(options[optionKey]));
     });
   }
 
