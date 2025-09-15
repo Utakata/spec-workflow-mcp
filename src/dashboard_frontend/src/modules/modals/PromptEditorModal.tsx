@@ -39,7 +39,8 @@ export function PromptEditorModal({
   };
 
   const handleCopy = () => {
-    onCopy(value);
+    const command = `/sc: ${value}`;
+    onCopy(command);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
